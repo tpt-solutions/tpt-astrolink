@@ -1,0 +1,69 @@
+# Build artifacts
+target/
+dist/
+build/
+out/
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Go
+cloud-core/bin/
+relay/bin/
+*.test
+vendor/
+
+# Node / Next.js
+client-ui/node_modules/
+client-ui/.next/
+client-ui/.nuxt/
+client-ui/out/
+client-ui/coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Rust
+**/*.rs.bk
+Cargo.lock.bak
+.idea/
+
+# Python (note: zero-python project, but keep hygiene)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Env / secrets — DO NOT COMMIT
+.env
+.env.*
+*.pem
+*.key
+secrets/
+*.secret
+.env.local
+
+# Editor / OS
+.editorconfig.bak
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+logs/
+
+# Terraform / IaC state
+infra/**/*.tfstate
+infra/**/*.tfstate.*
+.terraform/
+*.tfplan
+
+# Docs build
+docs/_site/
+docs/build/

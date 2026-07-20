@@ -1,0 +1,15 @@
+[package]
+name = "tpt-edge-imaging"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+flate2 = "1"
+
+[dependencies.tpt-edge-s3]
+path = "../s3"

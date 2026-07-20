@@ -1,0 +1,24 @@
+[package]
+name = "tpt-edge-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "tpt-edge-agent"
+path = "src/main.rs"
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tpt-edge-ffi = { path = "../ffi" }
+tpt-edge-mqtt = { path = "../mqtt" }
+tpt-edge-s3 = { path = "../s3" }
+tpt-edge-imaging = { path = "../imaging" }
+tpt-edge-ai = { path = "../edge-ai" }

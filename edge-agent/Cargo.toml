@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/agent",
+    "crates/ffi",
+    "crates/mqtt",
+    "crates/s3",
+    "crates/imaging",
+    "crates/edge-ai",
+]
+exclude = ["target"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["TPT Solutions"]
+repository = "https://example.com/tpt-solutions/tpt-astrolink"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rumqttc = "0.24"
+aws-config = "1"
+aws-sdk-s3 = "1"
+onte = "0"  # placeholder; real ONNX runtime added in Phase 2
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true

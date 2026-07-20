@@ -1,0 +1,25 @@
+TPT ASTROLINK
+Document Version: 1.1 | Date: July 20, 2026
+Project Codename: Project Cosmos
+1. Executive Summary
+TPT AstroLink is a unified, cloud-native platform designed to democratize astronomical observation. By utilizing a high-performance, memory-safe edge architecture, it bridges the gap between amateur hardware and professional-grade data collection. It offers a SaaS remote observatory control dashboard and a distributed "virtual observatory" network for crowdsourced sky monitoring.
+2. Target Audience
+Pro-Amateurs & Remote Operators: Individuals who own backyard observatories and need reliable, mobile-friendly, cross-platform control.
+Citizen Scientists & Researchers: Academics or amateur groups needing continuous, multi-timezone monitoring of transient events.
+3. Core Architecture & Tech Stack (Zero-Python)
+TPT Edge Agent (The "Node"): A lightweight, ultra-efficient binary running on local observatory hardware (Raspberry Pi 5, Intel NUC).
+Tech: Rust. Chosen for its zero-cost abstractions, memory safety without a garbage collector, and excellent FFI (Foreign Function Interface) capabilities to interface directly with C/C++ based INDI and ASCOM hardware drivers.
+TPT Cloud Core:
+Tech: Go (Golang). Chosen for its exceptional handling of massive concurrent WebSocket connections (crucial for real-time telemetry) and low-latency microservices.
+Storage: PostgreSQL (metadata), AWS S3 (raw FITS image storage).
+TPT Client UI:
+Tech: TypeScript / React / Next.js frontend, Three.js for 3D sky visualization.
+4. Key Features (MVP Scope)
+Universal Control Dashboard: A responsive web UI to slew mounts, control focusers, monitor weather sensors, and trigger imaging sequences with sub-second latency.
+Auto-Astrometry & Tagging: Every image is passed to the Astrometry.net C-backend (via direct API/CLI) to plate-solve and tag exact RA/Dec coordinates.
+The "Relay" Protocol (Crowdsourcing): A Go-based scheduling engine that assigns observation targets to different TPT Edge Nodes based on local night-time availability, stitching the data together in the cloud.
+Edge AI Transient Alert: A lightweight computer vision model (compiled via Rust/ONNX runtime directly on the Edge Agent) to detect sudden brightness anomalies, triggering automatic "Target of Opportunity" alerts.
+5. Data Flow
+Command: User clicks "Slew" in Web UI -> WebSocket to TPT Cloud (Go) -> MQTT to TPT Edge Agent (Rust) -> FFI to INDI/ASCOM C-libraries -> Telescope Mount.
+Telemetry: Edge Agent (Rust) reads mount encoders -> MQTT to TPT Cloud (Go) -> WebSocket to Web UI.
+Data: Edge Agent captures FITS image -> Compresses -> Uploads to S3 -> Cloud worker (Go) triggers Astrometry C-backend -> Metadata saved to Postgres.
