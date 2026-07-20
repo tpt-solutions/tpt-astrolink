@@ -1,0 +1,95 @@
+/* TPT AstroLink — Client UI global styles. Responsive layout helpers. */
+
+:root {
+  --bg: #070a14;
+  --panel: #0f1320;
+  --border: #2a2f45;
+  --text: #e6e9f0;
+  --accent: #ffd166;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.tpt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.tpt-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--panel);
+}
+
+.tpt-card h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.tpt-card pre {
+  background: #070a14;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  overflow: auto;
+}
+
+.tpt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.tpt-row label {
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.tpt-btn {
+  background: #1b2236;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tpt-btn:hover {
+  border-color: var(--accent);
+}
+
+.tpt-input {
+  background: #070a14;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  width: 120px;
+}
+
+@media (max-width: 720px) {
+  .tpt-grid {
+    grid-template-columns: 1fr;
+  }
+  .tpt-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

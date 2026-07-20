@@ -22,30 +22,34 @@ impl DeviceHub {
     }
 
     pub fn slew(&self, ra: f64, dec: f64, epoch: Epoch) -> Result<()> {
-        self.mount.slew(ra, dec, epoch)
+        self.mount.slew(ra, dec, epoch)?;
+        Ok(())
     }
 
     pub fn stop(&self) -> Result<()> {
-        self.mount.stop()
+        self.mount.stop()?;
+        Ok(())
     }
 
     pub fn mount_state(&self) -> Result<MountState> {
-        self.mount.read_encoders()
+        Ok(self.mount.read_encoders()?)
     }
 
     pub fn focus_to(&self, position: u32) -> Result<()> {
-        self.focuser.move_to(position)
+        self.focuser.move_to(position)?;
+        Ok(())
     }
 
     pub fn focus_relative(&self, delta: i32) -> Result<()> {
-        self.focuser.move_relative(delta)
+        self.focuser.move_relative(delta)?;
+        Ok(())
     }
 
     pub fn focuser_state(&self) -> Result<FocuserState> {
-        self.focuser.position()
+        Ok(self.focuser.position()?)
     }
 
     pub fn weather_sample(&self) -> Result<WeatherSample> {
-        self.weather.sample()
+        Ok(self.weather.sample()?)
     }
 }

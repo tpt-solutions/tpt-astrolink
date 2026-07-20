@@ -14,8 +14,11 @@ pub struct S3Uploader {
 
 impl S3Uploader {
     pub async fn new(bucket: &str, region: &str) -> Result<Self> {
-        let region_provider = RegionProviderChain::first_try(Some(region.to_string().into()));
-        let cfg = aws_config::from_env().region(region_provider).load().await;
+        let region_provider = RegionProviderChain::first_try(Some(aws_config::Region::new(region.to_string())));
+        let cfg = aws_config::defaults(aws_config::BehaviorVersion::latest())
+            .region(region_provider)
+            .load()
+            .await;
         Ok(Self {
             client: Client::new(&cfg),
             bucket: bucket.to_string(),

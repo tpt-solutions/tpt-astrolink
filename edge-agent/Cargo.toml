@@ -28,7 +28,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 rumqttc = "0.24"
 aws-config = "1"
 aws-sdk-s3 = "1"
-onte = "0"  # placeholder; real ONNX runtime added in Phase 2
 
 [profile.release]
 opt-level = 3

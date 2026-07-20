@@ -53,65 +53,65 @@ pub struct WeatherSample {
 
 // ----- Safe driver wrappers (unsafe layer confined to `sys` module) -----
 
-pub struct MountDriver(sys::indi_handle_t);
-pub struct FocuserDriver(sys::indi_handle_t);
-pub struct WeatherDriver(sys::indi_handle_t);
+pub struct MountDriver(*mut sys::indi_handle_t);
+pub struct FocuserDriver(*mut sys::indi_handle_t);
+pub struct WeatherDriver(*mut sys::indi_handle_t);
 
 impl MountDriver {
     pub fn connect() -> Result<Self, DeviceError> {
-        let h = sys::indi_connect(b"mount\0".as_ptr() as *const _)?;
+        let h = sys::connect(b"mount\0".as_ptr() as *const _)?;
         Ok(MountDriver(h))
     }
     pub fn slew(&self, ra: f64, dec: f64, _epoch: Epoch) -> Result<(), DeviceError> {
-        sys::indi_mount_slew(&self.0, ra, dec)
+        sys::mount_slew(self.0, ra, dec)
     }
     pub fn stop(&self) -> Result<(), DeviceError> {
-        sys::indi_mount_stop(&self.0)
+        sys::mount_stop(self.0)
     }
     pub fn read_encoders(&self) -> Result<MountState, DeviceError> {
-        sys::indi_mount_read(&self.0)
+        sys::mount_read(self.0)
     }
 }
 
 impl FocuserDriver {
     pub fn connect() -> Result<Self, DeviceError> {
-        let h = sys::indi_connect(b"focuser\0".as_ptr() as *const _)?;
+        let h = sys::connect(b"focuser\0".as_ptr() as *const _)?;
         Ok(FocuserDriver(h))
     }
     pub fn move_to(&self, position: u32) -> Result<(), DeviceError> {
-        sys::indi_focuser_move(&self.0, position as i64)
+        sys::focuser_move(self.0, position as i64)
     }
     pub fn move_relative(&self, delta: i32) -> Result<(), DeviceError> {
-        sys::indi_focuser_move(&self.0, delta as i64)
+        sys::focuser_move(self.0, delta as i64)
     }
     pub fn position(&self) -> Result<FocuserState, DeviceError> {
-        sys::indi_focuser_read(&self.0)
+        sys::focuser_read(self.0)
     }
 }
 
 impl WeatherDriver {
     pub fn connect() -> Result<Self, DeviceError> {
-        let h = sys::indi_connect(b"weather\0".as_ptr() as *const _)?;
+        let h = sys::connect(b"weather\0".as_ptr() as *const _)?;
         Ok(WeatherDriver(h))
     }
     pub fn sample(&self) -> Result<WeatherSample, DeviceError> {
-        sys::indi_weather_sample(&self.0)
+        sys::weather_sample(self.0)
     }
 }
 
 impl Drop for MountDriver {
     fn drop(&mut self) {
-        let _ = sys::indi_disconnect(&self.0);
+        let _ = sys::disconnect(self.0);
     }
 }
 impl Drop for FocuserDriver {
     fn drop(&mut self) {
-        let _ = sys::indi_disconnect(&self.0);
+        let _ = sys::disconnect(self.0);
     }
 }
 impl Drop for WeatherDriver {
     fn drop(&mut self) {
-        let _ = sys::indi_disconnect(&self.0);
+        let _ = sys::disconnect(self.0);
     }
 }
 
@@ -122,6 +122,16 @@ mod sys {
     #[repr(C)]
     pub struct indi_handle_t {
         _private: [u8; 0],
+    }
+
+    #[repr(C)]
+    struct WeatherSampleRaw {
+        temp: f64,
+        humidity: f64,
+        pressure: f64,
+        wind_speed: f64,
+        dew_point: f64,
+        cloud_cover: f64,
     }
 
     extern "C" {
@@ -135,17 +145,8 @@ mod sys {
         fn indi_weather_sample(handle: *const indi_handle_t, out: *mut WeatherSampleRaw) -> i32;
     }
 
-    #[repr(C)]
-    struct WeatherSampleRaw {
-        temp: f64,
-        humidity: f64,
-        pressure: f64,
-        wind_speed: f64,
-        dew_point: f64,
-        cloud_cover: f64,
-    }
-
-    pub fn indi_connect(device: *const u8) -> Result<*mut indi_handle_t, DeviceError> {
+    // Safe wrappers around the extern declarations above.
+    pub fn connect(device: *const u8) -> Result<*mut indi_handle_t, DeviceError> {
         unsafe {
             let p = indi_connect(device);
             if p.is_null() {
@@ -156,28 +157,28 @@ mod sys {
         }
     }
 
-    pub fn indi_disconnect(handle: *const indi_handle_t) -> Result<(), DeviceError> {
+    pub fn disconnect(handle: *const indi_handle_t) -> Result<(), DeviceError> {
         unsafe {
             let rc = indi_disconnect(handle);
             if rc == 0 { Ok(()) } else { Err(DeviceError::Driver(rc)) }
         }
     }
 
-    pub fn indi_mount_slew(handle: *const indi_handle_t, ra: f64, dec: f64) -> Result<(), DeviceError> {
+    pub fn mount_slew(handle: *const indi_handle_t, ra: f64, dec: f64) -> Result<(), DeviceError> {
         unsafe {
             let rc = indi_mount_slew(handle, ra, dec);
             if rc == 0 { Ok(()) } else { Err(DeviceError::Driver(rc)) }
         }
     }
 
-    pub fn indi_mount_stop(handle: *const indi_handle_t) -> Result<(), DeviceError> {
+    pub fn mount_stop(handle: *const indi_handle_t) -> Result<(), DeviceError> {
         unsafe {
             let rc = indi_mount_stop(handle);
             if rc == 0 { Ok(()) } else { Err(DeviceError::Driver(rc)) }
         }
     }
 
-    pub fn indi_mount_read(handle: *const indi_handle_t) -> Result<MountState, DeviceError> {
+    pub fn mount_read(handle: *const indi_handle_t) -> Result<MountState, DeviceError> {
         unsafe {
             let mut ra = 0f64;
             let mut dec = 0f64;
@@ -198,14 +199,14 @@ mod sys {
         }
     }
 
-    pub fn indi_focuser_move(handle: *const indi_handle_t, steps: i64) -> Result<(), DeviceError> {
+    pub fn focuser_move(handle: *const indi_handle_t, steps: i64) -> Result<(), DeviceError> {
         unsafe {
             let rc = indi_focuser_move(handle, steps);
             if rc == 0 { Ok(()) } else { Err(DeviceError::Driver(rc)) }
         }
     }
 
-    pub fn indi_focuser_read(handle: *const indi_handle_t) -> Result<FocuserState, DeviceError> {
+    pub fn focuser_read(handle: *const indi_handle_t) -> Result<FocuserState, DeviceError> {
         unsafe {
             let mut pos = 0u32;
             let mut temp = 0f64;
@@ -218,7 +219,7 @@ mod sys {
         }
     }
 
-    pub fn indi_weather_sample(handle: *const indi_handle_t) -> Result<WeatherSample, DeviceError> {
+    pub fn weather_sample(handle: *const indi_handle_t) -> Result<WeatherSample, DeviceError> {
         unsafe {
             let mut raw = WeatherSampleRaw {
                 temp: 0.0,
@@ -244,3 +245,4 @@ mod sys {
         }
     }
 }
+

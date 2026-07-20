@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-core
+  labels:
+    app: cloud-core
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloud-core
+  template:
+    metadata:
+      labels:
+        app: cloud-core
+    spec:
+      containers:
+        - name: cloud-core
+          image: tptastrolink/cloud-core:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TPT_MQTT_BROKER
+              value: "tcp://mqtt:1883"
+            - name: TPT_HTTP_ADDR
+              value: ":8080"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-core
+spec:
+  selector:
+    app: cloud-core
+  ports:
+    - name: ws
+      port: 8080
+      targetPort: 8080
+    - name: metrics
+      port: 9090
+      targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,24 @@
+name: edge-agent
+on:
+  push:
+    paths:
+      - "edge-agent/**"
+      - ".github/workflows/edge-agent.yml"
+  pull_request:
+    paths:
+      - "edge-agent/**"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: edge-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace -- -D warnings
+      - run: cargo test --workspace
+      - run: cargo build --release --workspace
