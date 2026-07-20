@@ -28,6 +28,19 @@ async fn main() -> Result<()> {
     let hub = DeviceHub::connect(&config).await?;
     let mut bus = CommandBus::new(hub, &config).await?;
 
+    // Optional OTA self-update loop, supervised by tpt-edge-watchdog.
+    if let Some(manifest_url) = &config.update_manifest_url {
+        let target = std::env::consts::ARCH.to_string() + "-" + std::env::consts::OS;
+        let version = env!("CARGO_PKG_VERSION").to_string();
+        let manifest_url = manifest_url.clone();
+        tokio::spawn(async move {
+            let updater = tpt_edge_update::Updater::new(manifest_url, version, target);
+            if let Err(e) = updater.run().await {
+                tracing::error!(error = %e, "ota updater exited");
+            }
+        });
+    }
+
     bus.run().await?;
     Ok(())
 }

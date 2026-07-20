@@ -8,6 +8,25 @@ import type { CommandType, Envelope } from "./types";
 type Listener = (env: Envelope) => void;
 
 /**
+ * createCommandEnvelope builds the JSON envelope sent to the Cloud Core
+ * gateway. Extracted as a pure function so the WebSocket contract can be
+ * unit-tested without React/DOM. Mirrors docs/protocols/websocket-contract.md.
+ */
+export function createCommandEnvelope(
+  type: CommandType,
+  payload: unknown,
+  nodeId?: string,
+): Envelope {
+  return {
+    type,
+    id: crypto.randomUUID(),
+    ts: new Date().toISOString(),
+    nodeId,
+    payload,
+  };
+}
+
+/**
  * useTelemetry opens a single WebSocket to the Cloud Core gateway and exposes
  * a `send` for commands plus a subscription for inbound envelopes.
  */
@@ -39,16 +58,13 @@ export function useTelemetry(url: string) {
     };
   }, []);
 
-  const send = useCallback((type: CommandType, payload: unknown, nodeId?: string) => {
-    const env: Envelope = {
-      type,
-      id: crypto.randomUUID(),
-      ts: new Date().toISOString(),
-      nodeId,
-      payload,
-    };
-    wsRef.current?.send(JSON.stringify(env));
-  }, []);
+  const send = useCallback(
+    (type: CommandType, payload: unknown, nodeId?: string) => {
+      const env = createCommandEnvelope(type, payload, nodeId);
+      wsRef.current?.send(JSON.stringify(env));
+    },
+    [],
+  );
 
   return { connected, send, subscribe };
 }

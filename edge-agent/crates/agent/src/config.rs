@@ -11,6 +11,7 @@ pub struct Config {
     pub mqtt_port: u16,
     pub s3_bucket: String,
     pub s3_region: String,
+    pub update_manifest_url: Option<String>,
 }
 
 impl Config {
@@ -24,6 +25,7 @@ impl Config {
                 .unwrap_or(1883),
             s3_bucket: env::var("TPT_S3_BUCKET").unwrap_or_else(|_| "tpt-astrolink-fits".into()),
             s3_region: env::var("TPT_S3_REGION").unwrap_or_else(|_| "us-east-1".into()),
+            update_manifest_url: env::var("TPT_UPDATE_MANIFEST_URL").ok(),
         })
     }
 }

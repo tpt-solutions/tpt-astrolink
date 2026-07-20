@@ -9,3 +9,14 @@ authors.workspace = true
 anyhow.workspace = true
 serde.workspace = true
 tracing.workspace = true
+# ONNX Runtime for edge transient detection.
+# We use the prebuilt binaries (`download-binaries`) rather than
+# `load-dynamic` to avoid the vitis EP symbol mismatch on this release.
+ort = { version = "2.0.0-rc.12", default-features = false, features = [
+    "std",
+    "ndarray",
+    "api-24",
+    "download-binaries",
+    "copy-dylibs",
+    "tls-rustls",
+] }

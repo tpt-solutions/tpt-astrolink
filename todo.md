@@ -71,7 +71,7 @@ License: Dual MIT / Apache-2.0 · TPT Solutions
 
 ## Phase 8 — Testing & QA
 - [x] Unit tests per component (Rust, Go, TS) (`edge-agent` imaging+edge-ai; `cloud-core` protocol+mqttbridge; `relay` scheduler+stitching; `client-ui` vitest)
-- [ ] Integration tests for WebSocket/MQTT contracts
+- [x] Integration tests for WebSocket/MQTT contracts (Rust mqtt contract, Go gateway+bridge, TS ws contract)
 - [ ] Hardware-in-the-loop test plan for INDI/ASCOM FFI layer
 - [ ] Load testing for concurrent WebSocket connections (Cloud Core)
 - [ ] Edge AI model accuracy validation (transient detection)

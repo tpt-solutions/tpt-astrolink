@@ -83,7 +83,8 @@ impl CommandBus {
             if !self.imaging.is_active() {
                 break;
             }
-            let key = self.imaging.capture_frame(&self.node_id(), &obs_id, frame).await?;
+            let (key, pixels) =
+                self.imaging.capture_frame_pixels(&self.node_id(), &obs_id, frame).await?;
             self.mqtt.publish_event(
                 "imaging.progress",
                 &serde_json::json!({
@@ -93,7 +94,6 @@ impl CommandBus {
             )?;
 
             // Edge-AI transient detection on the captured frame.
-            let pixels: Vec<f32> = vec![];
             if let Some(alert) = self.detector.detect(&pixels, 0.0, 0.0, &key) {
                 if alert.confidence >= self.detector.threshold() {
                     self.mqtt.publish_event("too", &serde_json::to_string(&alert)?)?;

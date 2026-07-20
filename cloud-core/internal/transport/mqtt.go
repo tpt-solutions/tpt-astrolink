@@ -26,6 +26,38 @@ type Client struct {
 // Handler receives inbound payloads with their topic.
 type Handler func(topic string, payload []byte)
 
+// Topic builders for the Cloud Core <-> Edge Agent contract
+// (docs/protocols/mqtt-contract.md). Kept allocation-free and side-effect
+// free so they can be unit-tested without a broker.
+const topicPrefix = "tpt/v1"
+
+// CommandTopic targets a specific device on a node, e.g.
+// tpt/v1/<nodeId>/cmd/<device>.
+func CommandTopic(nodeID, device string) string {
+	return topicPrefix + "/" + nodeID + "/cmd/" + device
+}
+
+// TelemetryTopic for a device, e.g. tpt/v1/<nodeId>/tele/<device>.
+func TelemetryTopic(nodeID, device string) string {
+	return topicPrefix + "/" + nodeID + "/tele/" + device
+}
+
+// EventTopic for an event, e.g. tpt/v1/<nodeId>/evt/<event>.
+func EventTopic(nodeID, event string) string {
+	return topicPrefix + "/" + nodeID + "/evt/" + event
+}
+
+// StatusTopic is the LWT/health topic for a node.
+func StatusTopic(nodeID string) string {
+	return topicPrefix + "/" + nodeID + "/status"
+}
+
+// PublishCommand sends a command envelope to the node's command topic,
+// encoded per the MQTT contract (cmd/id/ts/params).
+func (cl *Client) PublishCommand(nodeID, device string, payload []byte) error {
+	return cl.Publish(CommandTopic(nodeID, device), payload)
+}
+
 // New connects to the broker and returns a ready Client. On connect it
 // subscribes to all edge telemetry and event topics.
 func New(cfg Config, h Handler) (*Client, error) {

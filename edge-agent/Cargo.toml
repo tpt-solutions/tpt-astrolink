@@ -7,6 +7,7 @@ members = [
     "crates/s3",
     "crates/imaging",
     "crates/edge-ai",
+    "crates/update",
 ]
 exclude = ["target"]
 

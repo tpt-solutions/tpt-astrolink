@@ -22,3 +22,4 @@ tpt-edge-mqtt = { path = "../mqtt" }
 tpt-edge-s3 = { path = "../s3" }
 tpt-edge-imaging = { path = "../imaging" }
 tpt-edge-ai = { path = "../edge-ai" }
+tpt-edge-update = { path = "../update" }

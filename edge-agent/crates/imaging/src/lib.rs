@@ -11,6 +11,13 @@ use std::io::Write;
 use tpt_edge_s3::S3Uploader;
 use tracing::info;
 
+/// Synthetic frame geometry used while real camera capture (Phase 2 FFI) is
+/// stubbed. The edge-AI detector downstream expects a normalized `f32` buffer
+/// in this shape; swapping in real hardware capture must preserve it.
+pub const FRAME_W: usize = 64;
+pub const FRAME_H: usize = 64;
+pub const FRAME_LEN: usize = FRAME_W * FRAME_H;
+
 pub struct CapturePipeline {
     uploader: S3Uploader,
     active: bool,
@@ -40,6 +47,22 @@ impl CapturePipeline {
         Ok(())
     }
 
+    /// Capture one frame, upload it as a gzipped FITS object, and return the
+    /// object key together with the normalized pixel buffer for downstream
+    /// edge-AI transient detection.
+    pub async fn capture_frame_pixels(
+        &self,
+        node_id: &str,
+        obs_id: &str,
+        frame: u32,
+    ) -> Result<(String, Vec<f32>)> {
+        let pixels = Self::capture_raw_pixels()?;
+        let compressed = Self::gzip_pixels(&pixels)?;
+        let key = Self::object_key(node_id, obs_id, frame);
+        self.uploader.upload_fits(&key, compressed).await?;
+        Ok((key, pixels))
+    }
+
     /// Capture one frame and upload it as a gzipped FITS object.
     pub async fn capture_frame(
         &self,
@@ -47,16 +70,37 @@ impl CapturePipeline {
         obs_id: &str,
         frame: u32,
     ) -> Result<String> {
-        let raw = Self::capture_raw()?;
-        let compressed = Self::gzip(&raw)?;
-        let key = Self::object_key(node_id, obs_id, frame);
-        self.uploader.upload_fits(&key, compressed).await?;
+        let (key, _pixels) = self.capture_frame_pixels(node_id, obs_id, frame).await?;
         Ok(key)
     }
 
-    fn capture_raw() -> Result<Vec<u8>> {
-        // TODO(Phase 2): real camera capture via FFI.
-        Ok(vec![0u8; 0])
+    /// Generate a normalized (0.0..=1.0) synthetic frame. Stands in for the
+    /// real camera while FFI capture is stubbed; produces a stable sky
+    /// background plus read noise so the edge-AI baseline has something to
+    /// adapt to.
+    fn capture_raw_pixels() -> Result<Vec<f32>> {
+        let mut rng = Lcg::new(0x9E37_79B9_2EB5_D7C7 ^ (FRAME_LEN as u64));
+        let mut pixels = Vec::with_capacity(FRAME_LEN);
+        for y in 0..FRAME_H {
+            for x in 0..FRAME_W {
+                // Gentle vignetted sky background + read noise.
+                let vignette = 1.0 - 0.3 * (((x as f32 / FRAME_W as f32) - 0.5).powi(2)
+                    + ((y as f32 / FRAME_H as f32) - 0.5).powi(2));
+                let background = 0.12 * vignette;
+                let noise = (rng.next_f32() - 0.5) * 0.04;
+                pixels.push((background + noise).clamp(0.0, 1.0));
+            }
+        }
+        Ok(pixels)
+    }
+
+    /// Compress a normalized `f32` pixel buffer to gzipped little-endian bytes.
+    fn gzip_pixels(pixels: &[f32]) -> Result<Vec<u8>> {
+        let mut raw = Vec::with_capacity(pixels.len() * 4);
+        for p in pixels {
+            raw.extend_from_slice(&p.to_le_bytes());
+        }
+        Self::gzip(&raw)
     }
 
     pub fn gzip(data: &[u8]) -> Result<Vec<u8>> {
@@ -67,6 +111,22 @@ impl CapturePipeline {
 
     pub fn object_key(node_id: &str, obs_id: &str, frame: u32) -> String {
         format!("fits/raw/{}/{}/{}.fits.gz", node_id, obs_id, frame)
+    }
+}
+
+/// Tiny deterministic LCG so synthetic frames are reproducible in tests and
+/// during validation runs.
+struct Lcg(u64);
+impl Lcg {
+    fn new(seed: u64) -> Self {
+        Self(seed | 1)
+    }
+    fn next_u64(&mut self) -> u64 {
+        self.0 = self.0.wrapping_mul(63_629_635_429).wrapping_add(0x9E37_79B9_7F4A_7C15);
+        self.0
+    }
+    fn next_f32(&mut self) -> f32 {
+        (self.next_u64() >> 40) as f32 / (1u64 << 24) as f32
     }
 }
 

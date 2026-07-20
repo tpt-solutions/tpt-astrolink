@@ -5,6 +5,7 @@
 use anyhow::Result;
 use rumqttc::{Client, Connection, Event, Incoming, MqttOptions, QoS};
 use serde::Serialize;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tracing::debug;
 
@@ -26,7 +27,8 @@ impl MqttMessage {
 }
 
 /// Publisher abstracts outgoing MQTT publishes so the contract can be tested
-/// without a live broker.
+/// without a live broker. Implemented for rumqttc::Client in production and
+/// for a capture double in tests.
 pub trait Publisher: Send + Sync {
     fn publish(&self, topic: &str, payload: &[u8]) -> Result<()>;
 }
@@ -67,9 +69,6 @@ impl MqttClient {
     /// Test-only constructor with an injected publisher.
     #[cfg(test)]
     pub fn with_publisher(node_id: &str, publisher: Box<dyn Publisher>) -> Self {
-        // A dummy eventloop is not needed for publish-only tests; we use a
-        // disconnected Client just to satisfy the type. `next()` is unused in
-        // those tests.
         let opts = MqttOptions::new(format!("node/{}", node_id), "localhost", 1883);
         let (_client, eventloop) = Client::new(opts, 10);
         Self {
@@ -136,13 +135,14 @@ pub fn parse_incoming(incoming: &Incoming) -> Option<MqttMessage> {
 mod contract_tests {
     use super::*;
 
-    // Capturing publisher records every (topic, payload) for assertion.
+    /// Capture records every (topic, payload) for contract assertions. The
+    /// recorded vector is shared via Arc so tests can read it after publishing.
     struct Capture {
-        pubs: std::sync::Mutex<Vec<(String, String)>>,
+        recorded: Arc<Mutex<Vec<(String, String)>>>,
     }
     impl Publisher for Capture {
         fn publish(&self, topic: &str, payload: &[u8]) -> Result<()> {
-            self.pubs
+            self.recorded
                 .lock()
                 .unwrap()
                 .push((topic.to_string(), String::from_utf8_lossy(payload).into_owned()));
@@ -150,14 +150,20 @@ mod contract_tests {
         }
     }
 
+    fn capture() -> (Box<dyn Publisher>, Arc<Mutex<Vec<(String, String)>>>) {
+        let recorded: Arc<Mutex<Vec<(String, String)>>> = Default::default();
+        let cap = Capture { recorded: recorded.clone() };
+        (Box::new(cap), recorded)
+    }
+
     #[test]
     fn telemetry_topic_and_payload() {
-        let cap = Capture { pubs: Default::default() };
-        let client = MqttClient::with_publisher("n1", Box::new(cap));
+        let (pub_box, recorded) = capture();
+        let client = MqttClient::with_publisher("n1", pub_box);
         let payload = serde_json::json!({"ra":1.0,"status":"idle"});
         client.publish_telemetry("mount", &payload).unwrap();
 
-        let pubs = client_pub(&client);
+        let pubs = recorded.lock().unwrap();
         assert_eq!(pubs.len(), 1);
         assert_eq!(pubs[0].0, "tpt/v1/n1/tele/mount");
         assert_eq!(pubs[0].1, r#"{"ra":1.0,"status":"idle"}"#);
@@ -165,11 +171,12 @@ mod contract_tests {
 
     #[test]
     fn event_and_status_topics() {
-        let cap = Capture { pubs: Default::default() };
-        let client = MqttClient::with_publisher("n2", Box::new(cap));
+        let (pub_box, recorded) = capture();
+        let client = MqttClient::with_publisher("n2", pub_box);
         client.publish_event("too", r#"{"objectId":"x"}"#).unwrap();
         client.publish_status(true).unwrap();
-        let pubs = client_pub(&client);
+
+        let pubs = recorded.lock().unwrap();
         assert_eq!(pubs[0].0, "tpt/v1/n2/evt/too");
         assert_eq!(pubs[1].0, "tpt/v1/n2/status");
         assert_eq!(pubs[1].1, r#"{"online":true}"#);
@@ -188,13 +195,5 @@ mod contract_tests {
         assert_eq!(msg.id, "c1");
         let ra: f64 = msg.param("ra").unwrap();
         assert!((ra - 12.5).abs() < 1e-9);
-    }
-
-    // Helper to read captured publications from a client (test-only).
-    fn client_pub(client: &MqttClient) -> Vec<(String, String)> {
-        // The capture is behind the Box<dyn Publisher>; we re-publish to a
-        // fresh capture to inspect. Simpler: keep the capture reachable.
-        let _ = client;
-        Vec::new()
     }
 }
