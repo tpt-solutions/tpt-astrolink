@@ -400,8 +400,8 @@ mod tests {
     fn no_false_trigger_on_clean_sky() {
         let d = TransientDetector::load_statistical().unwrap();
         let frame = synthetic_frame(64, 64, 42);
-        // Warm up the baseline.
-        for i in 0..20 {
+        // Warm up the baseline (must exceed window/2).
+        for i in 0..40 {
             let _ = d.detect(&synthetic_frame(64, 64, i as u64 + 1), 0.0, 0.0, "k");
         }
         // A normal frame must not alert.
@@ -411,7 +411,7 @@ mod tests {
     #[test]
     fn transient_triggers_alert() {
         let d = TransientDetector::load_statistical().unwrap();
-        for i in 0..20 {
+        for i in 0..40 {
             let _ = d.detect(&synthetic_frame(64, 64, i as u64 + 1), 0.0, 0.0, "k");
         }
         let clean = synthetic_frame(64, 64, 99);

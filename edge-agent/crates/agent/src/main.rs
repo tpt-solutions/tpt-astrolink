@@ -33,8 +33,18 @@ async fn main() -> Result<()> {
         let target = std::env::consts::ARCH.to_string() + "-" + std::env::consts::OS;
         let version = env!("CARGO_PKG_VERSION").to_string();
         let manifest_url = manifest_url.clone();
+        let mut updater = tpt_edge_update::Updater::new(manifest_url, version, target);
+        // Enable signed-release verification when a public key is provided.
+        if let Ok(pubkey) = std::env::var("TPT_UPDATE_PUBKEY") {
+            updater = match updater.with_pubkey_hex(&pubkey) {
+                Ok(u) => u,
+                Err(e) => {
+                    tracing::error!(error = %e, "invalid TPT_UPDATE_PUBKEY; OTA disabled");
+                    continue;
+                }
+            };
+        }
         tokio::spawn(async move {
-            let updater = tpt_edge_update::Updater::new(manifest_url, version, target);
             if let Err(e) = updater.run().await {
                 tracing::error!(error = %e, "ota updater exited");
             }

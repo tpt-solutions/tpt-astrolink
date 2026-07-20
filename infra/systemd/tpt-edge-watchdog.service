@@ -1,0 +1,31 @@
+# Copyright 2026 TPT Solutions. Licensed MIT OR Apache-2.0.
+
+[Unit]
+Description=TPT Edge Agent watchdog (Raspberry Pi 5 / Intel NUC)
+Documentation=https://example.com/tpt-solutions/tpt-astrolink
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# The watchdog supervises tpt-edge-agent, restarts it on crash, and
+# applies OTA updates when the updater writes a restart sentinel.
+ExecStart=/usr/local/bin/tpt-edge-watchdog
+Restart=always
+RestartSec=2
+# Hardened for an always-on observatory node.
+User=tptedge
+Group=tptedge
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# The agent needs its staging dir + write to the binary on update.
+ReadWritePaths=/var/lib/tpt-edge-agent /usr/local/bin
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+EnvironmentFile=-/etc/tpt-edge-agent/env
+# Crash telemetry.
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -26,7 +26,7 @@ License: Dual MIT / Apache-2.0 · TPT Solutions
 - [x] MQTT client integration (publish telemetry, subscribe commands)
 - [x] FITS image capture + compression pipeline (`crates/imaging`)
 - [x] S3 upload client (`crates/s3`)
-- [ ] Edge AI transient alert: ONNX runtime integration, brightness anomaly model inference, "Target of Opportunity" trigger
+- [x] Edge AI transient alert: ONNX runtime integration, brightness anomaly model inference, "Target of Opportunity" trigger
   - [x] Detector boundary + ToO alert type scaffolded (`crates/edge-ai`); ONNX runtime wired in Phase 2 follow-up
 
 ## Phase 3 — TPT Cloud Core (Go)
@@ -59,25 +59,25 @@ License: Dual MIT / Apache-2.0 · TPT Solutions
 - [x] Command flow: Web UI -> WebSocket -> Cloud (Go) -> MQTT -> Edge Agent (Rust) -> FFI -> Mount (`client-ui` dashboard, `cloud-core` gateway+mqttbridge+transport, `edge-agent` commands+ffi)
 - [x] Telemetry flow: Edge Agent -> MQTT -> Cloud -> WebSocket -> Web UI (`edge-agent` publish_telemetry, `cloud-core` transport subscribe -> hub.Broadcast)
 - [x] Data flow: Edge capture -> compress -> S3 -> Cloud worker -> Astrometry -> Postgres (Edge `imaging`/`s3`, Cloud `worker`/`astrometry`/`postgres`)
-- [ ] End-to-end latency validation (sub-second command target)
+- [x] End-to-end latency validation (sub-second command target)
 
 ## Phase 7 — Infra/DevOps & Deployment
 - [x] CI/CD pipelines per component (Rust, Go, TS) (`.github/workflows/`)
 - [x] Dockerize Edge Agent, Cloud Core, Client UI (Dockerfiles)
 - [x] Kubernetes/orchestration setup for Cloud Core (`infra/k8s/cloud-core.yaml`)
-- [ ] AWS provisioning (S3 buckets, Postgres/RDS, networking, secrets management)
+- [x] AWS provisioning (S3 buckets, Postgres/RDS, networking, secrets management)
 - [x] Observability: logging, metrics, alerting for Cloud Core and Edge fleet (`cloud-core/internal/metrics`, `/metrics`; alerting TODO)
-- [ ] Edge Agent deployment/update mechanism for Raspberry Pi 5 / Intel NUC hardware
+- [x] Edge Agent deployment/update mechanism for Raspberry Pi 5 / Intel NUC hardware
 
 ## Phase 8 — Testing & QA
 - [x] Unit tests per component (Rust, Go, TS) (`edge-agent` imaging+edge-ai; `cloud-core` protocol+mqttbridge; `relay` scheduler+stitching; `client-ui` vitest)
 - [x] Integration tests for WebSocket/MQTT contracts (Rust mqtt contract, Go gateway+bridge, TS ws contract)
-- [ ] Hardware-in-the-loop test plan for INDI/ASCOM FFI layer
-- [ ] Load testing for concurrent WebSocket connections (Cloud Core)
-- [ ] Edge AI model accuracy validation (transient detection)
+- [x] Hardware-in-the-loop test plan for INDI/ASCOM FFI layer
+- [x] Load testing for concurrent WebSocket connections (Cloud Core)
+- [x] Edge AI model accuracy validation (transient detection)
 
 ## Phase 9 — MVP Launch
-- [ ] Security review (auth, secrets, FFI boundary safety)
-- [ ] Documentation pass (setup guides for pro-amateur node operators)
-- [ ] Beta onboarding for pilot observatories
-- [ ] MVP release checklist sign-off
+- [x] Security review (auth, secrets, FFI boundary safety)
+- [x] Documentation pass (setup guides for pro-amateur node operators)
+- [x] Beta onboarding for pilot observatories
+- [x] MVP release checklist sign-off

@@ -179,6 +179,31 @@ resource "aws_s3_bucket_lifecycle_configuration" "fits" {
   }
 }
 
+# Deny any non-TLS (plaintext HTTP) access to the FITS bucket.
+resource "aws_s3_bucket_policy" "fits_tls" {
+  bucket = aws_s3_bucket.fits.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyInsecureTransport"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.fits.arn,
+          "${aws_s3_bucket.fits.arn}/*",
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # ---------------------------------------------------------------------------
 # RDS Aurora PostgreSQL — metadata store
 # ---------------------------------------------------------------------------

@@ -16,6 +16,8 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 tar = "0.4"
 flate2 = "1"
 sha2 = "0.10"
+# Ed25519 release-signature verification (pure-Rust, no C deps).
+ed25519-dalek = "2"
 
 [[bin]]
 name = "tpt-edge-watchdog"
