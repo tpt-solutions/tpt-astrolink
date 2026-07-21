@@ -3,8 +3,8 @@
 //! S3 client for FITS upload. Key layout per docs/storage/s3-layout.md.
 
 use anyhow::Result;
-use aws_sdk_s3::Client;
 use aws_config::meta::region::RegionProviderChain;
+use aws_sdk_s3::Client;
 use tracing::info;
 
 pub struct S3Uploader {
@@ -14,7 +14,8 @@ pub struct S3Uploader {
 
 impl S3Uploader {
     pub async fn new(bucket: &str, region: &str) -> Result<Self> {
-        let region_provider = RegionProviderChain::first_try(Some(aws_config::Region::new(region.to_string())));
+        let region_provider =
+            RegionProviderChain::first_try(Some(aws_config::Region::new(region.to_string())));
         let cfg = aws_config::defaults(aws_config::BehaviorVersion::latest())
             .region(region_provider)
             .load()

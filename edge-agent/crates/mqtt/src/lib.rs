@@ -142,17 +142,19 @@ mod contract_tests {
     }
     impl Publisher for Capture {
         fn publish(&self, topic: &str, payload: &[u8]) -> Result<()> {
-            self.recorded
-                .lock()
-                .unwrap()
-                .push((topic.to_string(), String::from_utf8_lossy(payload).into_owned()));
+            self.recorded.lock().unwrap().push((
+                topic.to_string(),
+                String::from_utf8_lossy(payload).into_owned(),
+            ));
             Ok(())
         }
     }
 
     fn capture() -> (Box<dyn Publisher>, Arc<Mutex<Vec<(String, String)>>>) {
         let recorded: Arc<Mutex<Vec<(String, String)>>> = Default::default();
-        let cap = Capture { recorded: recorded.clone() };
+        let cap = Capture {
+            recorded: recorded.clone(),
+        };
         (Box::new(cap), recorded)
     }
 
