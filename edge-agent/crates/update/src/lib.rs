@@ -240,7 +240,12 @@ fn hex_encode(bytes: &[u8]) -> String {
 
 fn hex_decode(s: &str) -> Result<Vec<u8>> {
     // Tolerate whitespace (e.g. RFC-formatted vectors) between nibbles.
-    let filtered: Vec<u8> = s.as_bytes().iter().copied().filter(|b| !b.is_ascii_whitespace()).collect();
+    let filtered: Vec<u8> = s
+        .as_bytes()
+        .iter()
+        .copied()
+        .filter(|b| !b.is_ascii_whitespace())
+        .collect();
     let s = filtered;
     if s.len() % 2 != 0 {
         anyhow::bail!("hex string must have even length");
