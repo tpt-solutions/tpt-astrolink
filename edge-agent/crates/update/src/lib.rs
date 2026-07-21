@@ -57,7 +57,11 @@ pub struct Updater {
 }
 
 impl Updater {
-    pub fn new(manifest_url: impl Into<String>, current_version: impl Into<String>, target: impl Into<String>) -> Self {
+    pub fn new(
+        manifest_url: impl Into<String>,
+        current_version: impl Into<String>,
+        target: impl Into<String>,
+    ) -> Self {
         Self {
             manifest_url: manifest_url.into(),
             current_version: current_version.into(),
@@ -78,7 +82,8 @@ impl Updater {
         }
         let mut key = [0u8; 32];
         key.copy_from_slice(&bytes);
-        let vk = VerifyingKey::from_bytes(&key).map_err(|e| anyhow::anyhow!("invalid ed25519 key: {e}"))?;
+        let vk = VerifyingKey::from_bytes(&key)
+            .map_err(|e| anyhow::anyhow!("invalid ed25519 key: {e}"))?;
         self.pubkey = Some(vk);
         Ok(self)
     }
@@ -113,9 +118,14 @@ impl Updater {
             .text()
             .await
             .context("read release manifest body")?;
-        let manifest: ReleaseManifest = serde_json::from_str(&body).context("parse release manifest")?;
+        let manifest: ReleaseManifest =
+            serde_json::from_str(&body).context("parse release manifest")?;
         if manifest.target != self.target {
-            anyhow::bail!("manifest target {} does not match node target {}", manifest.target, self.target);
+            anyhow::bail!(
+                "manifest target {} does not match node target {}",
+                manifest.target,
+                self.target
+            );
         }
         Ok(manifest)
     }
@@ -124,7 +134,9 @@ impl Updater {
     /// Returns the path to the verified, extracted binary.
     pub async fn download_and_stage(&self, manifest: &ReleaseManifest) -> Result<PathBuf> {
         std::fs::create_dir_all(&self.staging_dir).ok();
-        let archive_path = self.staging_dir.join(format!("tpt-edge-agent-{}.tar.gz", manifest.version));
+        let archive_path = self
+            .staging_dir
+            .join(format!("tpt-edge-agent-{}.tar.gz", manifest.version));
         let bytes = reqwest::get(&manifest.url)
             .await
             .context("download release artifact")?
@@ -142,9 +154,9 @@ impl Updater {
             }
             verify_signature(vk, &bytes, &manifest.signature)
                 .context("release signature verification failed")?;
-                } else if !manifest.signature.is_empty() {
-                    tracing::warn!("release carries a signature but no verification key is configured; skipping verification");
-                }
+        } else if !manifest.signature.is_empty() {
+            tracing::warn!("release carries a signature but no verification key is configured; skipping verification");
+        }
 
         let extracted = self.staging_dir.join(format!("bin-{}", manifest.version));
         std::fs::write(&archive_path, &bytes).context("write archive to staging")?;

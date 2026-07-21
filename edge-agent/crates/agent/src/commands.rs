@@ -8,9 +8,9 @@ use crate::devices::DeviceHub;
 use anyhow::Result;
 use std::time::Duration;
 use tpt_edge_ai::TransientDetector;
+use tpt_edge_ffi::Epoch;
 use tpt_edge_imaging::CapturePipeline;
 use tpt_edge_mqtt::{MqttClient, MqttMessage};
-use tpt_edge_ffi::Epoch;
 use tracing::{info, warn};
 
 pub struct CommandBus {
@@ -26,7 +26,13 @@ impl CommandBus {
         let mqtt = MqttClient::connect(&config.node_id, &config.mqtt_broker, config.mqtt_port)?;
         let imaging = CapturePipeline::new(&config.s3_bucket, &config.s3_region).await?;
         let detector = TransientDetector::load_default()?;
-        Ok(Self { hub, mqtt, imaging, detector, config: config.clone() })
+        Ok(Self {
+            hub,
+            mqtt,
+            imaging,
+            detector,
+            config: config.clone(),
+        })
     }
 
     pub async fn run(&mut self) -> Result<()> {
@@ -83,8 +89,10 @@ impl CommandBus {
             if !self.imaging.is_active() {
                 break;
             }
-            let (key, pixels) =
-                self.imaging.capture_frame_pixels(&self.node_id(), &obs_id, frame).await?;
+            let (key, pixels) = self
+                .imaging
+                .capture_frame_pixels(&self.node_id(), &obs_id, frame)
+                .await?;
             self.mqtt.publish_event(
                 "imaging.progress",
                 &serde_json::json!({
