@@ -248,8 +248,12 @@ fn hex_decode(s: &str) -> Result<Vec<u8>> {
     let mut out = Vec::with_capacity(s.len() / 2);
     let mut i = 0;
     while i < s.len() {
-        let hi = (s[i] as char).to_digit(16).ok_or_else(|| anyhow::anyhow!("invalid hex char"))?;
-        let lo = (s[i + 1] as char).to_digit(16).ok_or_else(|| anyhow::anyhow!("invalid hex char"))?;
+        let hi = (s[i] as char)
+            .to_digit(16)
+            .ok_or_else(|| anyhow::anyhow!("invalid hex char"))?;
+        let lo = (s[i + 1] as char)
+            .to_digit(16)
+            .ok_or_else(|| anyhow::anyhow!("invalid hex char"))?;
         out.push((hi * 16 + lo) as u8);
         i += 2;
     }
@@ -274,9 +278,18 @@ mod tests {
 
     #[test]
     fn version_compare() {
-        assert_eq!(compare_versions("1.2.3", "1.2.2"), std::cmp::Ordering::Greater);
-        assert_eq!(compare_versions("2.0.0", "1.9.9"), std::cmp::Ordering::Greater);
-        assert_eq!(compare_versions("1.2.3", "1.2.3"), std::cmp::Ordering::Equal);
+        assert_eq!(
+            compare_versions("1.2.3", "1.2.2"),
+            std::cmp::Ordering::Greater
+        );
+        assert_eq!(
+            compare_versions("2.0.0", "1.9.9"),
+            std::cmp::Ordering::Greater
+        );
+        assert_eq!(
+            compare_versions("1.2.3", "1.2.3"),
+            std::cmp::Ordering::Equal
+        );
         assert_eq!(compare_versions("1.2.2", "1.2.3"), std::cmp::Ordering::Less);
     }
 
@@ -318,8 +331,10 @@ mod tests {
         assert!(u.with_pubkey_hex("deadbeef").is_err());
         // 64 hex chars -> 32 bytes -> ok.
         let good = "00".repeat(32);
-        assert!(Updater::new("https://x/manifest.json", "1.0.0", "aarch64-linux")
-            .with_pubkey_hex(&good)
-            .is_ok());
+        assert!(
+            Updater::new("https://x/manifest.json", "1.0.0", "aarch64-linux")
+                .with_pubkey_hex(&good)
+                .is_ok()
+        );
     }
 }
