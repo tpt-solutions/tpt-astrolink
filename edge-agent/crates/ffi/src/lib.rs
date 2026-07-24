@@ -212,7 +212,10 @@ mod sys {
             let mut temp = 0f64;
             let rc = indi_focuser_read(handle, &mut pos, &mut temp);
             if rc == 0 {
-                Ok(FocuserState { position: pos, temperature: temp })
+                Ok(FocuserState {
+                    position: pos,
+                    temperature: temp,
+                })
             } else {
                 Err(DeviceError::Driver(rc))
             }
@@ -245,4 +248,3 @@ mod sys {
         }
     }
 }
-
