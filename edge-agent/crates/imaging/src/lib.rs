@@ -84,8 +84,10 @@ impl CapturePipeline {
         for y in 0..FRAME_H {
             for x in 0..FRAME_W {
                 // Gentle vignetted sky background + read noise.
-                let vignette = 1.0 - 0.3 * (((x as f32 / FRAME_W as f32) - 0.5).powi(2)
-                    + ((y as f32 / FRAME_H as f32) - 0.5).powi(2));
+                let vignette = 1.0
+                    - 0.3
+                        * (((x as f32 / FRAME_W as f32) - 0.5).powi(2)
+                            + ((y as f32 / FRAME_H as f32) - 0.5).powi(2));
                 let background = 0.12 * vignette;
                 let noise = (rng.next_f32() - 0.5) * 0.04;
                 pixels.push((background + noise).clamp(0.0, 1.0));
@@ -122,7 +124,10 @@ impl Lcg {
         Self(seed | 1)
     }
     fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_mul(63_629_635_429).wrapping_add(0x9E37_79B9_7F4A_7C15);
+        self.0 = self
+            .0
+            .wrapping_mul(63_629_635_429)
+            .wrapping_add(0x9E37_79B9_7F4A_7C15);
         self.0
     }
     fn next_f32(&mut self) -> f32 {
